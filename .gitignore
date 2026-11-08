@@ -1,0 +1,33 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.egg-info/
+
+# 运行产物 (每 run 一个目录; 失败运行同样保留 — 不删失败集是硬规则)
+runs/
+
+# 证据媒体 (图像/视频留在本地, 不入库)
+*.ppm
+*.npy
+*.mp4
+
+# 本地环境与凭证 — 密钥一律走环境变量, 绝不入库
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+credentials.json
+.netrc
+
+# 编辑器
+.vscode/
+.idea/
+*.swp
+.DS_Store

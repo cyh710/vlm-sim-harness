@@ -1,0 +1,48 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  gates:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.9", "3.11", "3.12"]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      # 框架层零第三方依赖 — 只装测试框架
+      - name: Install test deps
+        run: python -m pip install --upgrade pip && pip install pytest
+
+      # 1) 全部单测 (含 VLM 离线路径与端到端集成)
+      - name: Unit + integration tests
+        run: python -m pytest tests/ -q
+
+      # 2) 10 场景 mock 矩阵 — 运行时行为契约
+      - name: Mock scenario matrix
+        run: python scripts/run_mock.py
+
+      # 3) oracle 隔离 — 信任边界必须由 CI 守住, 不能只靠约定
+      - name: Oracle isolation check
+        run: python scripts/check_oracle_isolation.py
+
+      # 4) 预注册漂移 — 技能表/提示词/DSL/判据变了必须重新冻结
+      - name: Preregistration drift check
+        run: python scripts/check_manifest_stable.py
+
+      # 5) 分析可复现 — 主端点数字必须能从逐集数据重新算出来
+      - name: Analysis reproducibility
+        run: |
+          python scripts/analyze_m5.py results/m5/m5_confirm_merged_rows.json
+          git diff --exit-code results/m5/m5_analysis.json

@@ -1,0 +1,36 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "vlm-agent-harness"
+version = "1.0.0"
+description = "A trust-boundary execution harness for VLM-driven embodied agents: nine-state FSM, independent verification, dual ledgers, pre-registered evaluation."
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "MIT" }
+authors = [{ name = "cyh710" }]
+keywords = ["vlm", "agent", "embodied-ai", "robotics", "evaluation", "llm"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Intended Audience :: Science/Research",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+
+# 框架层零第三方依赖 — 只有真正调用 VLM 时才需要图像编解码。
+dependencies = []
+
+[project.optional-dependencies]
+vlm = ["pillow>=10.0", "numpy>=1.24"]
+dev = ["pytest>=7.0"]
+
+[project.urls]
+Homepage = "https://github.com/cyh710/vlm-agent-harness"
+
+[tool.setuptools.packages.find]
+include = ["harness*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]

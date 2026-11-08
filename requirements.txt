@@ -1,0 +1,14 @@
+# 框架层本身零依赖 (纯标准库) — clone 下来就能跑全部单测与 mock 场景。
+# 下面两项只在真正调用 VLM (需要图像编解码) 时才需要。
+#
+#   pip install -r requirements.txt
+#
+# 若只想跑框架自检 (单测 + mock 矩阵), 不需要装任何东西:
+#   python -m pytest tests/ -q
+#   python scripts/run_mock.py
+
+# 图像 base64 编码 (VLM 请求里的 PNG 负载)
+pillow>=10.0
+
+# 数值 (注册表位姿、IoU/距离计算)
+numpy>=1.24

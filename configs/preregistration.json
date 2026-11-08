@@ -64,7 +64,7 @@
     "vlm_prompt_hash": "5e70589fc9fc14de803f158ad1b8015ca00ee701c1b61d5b0265e8692371542f",
     "skill_manifest_hash": "2ace69f1a659106abf62416484c6a25413defe2b7191f9d70f0380fce32a4df3",
     "dsl_whitelist_hash": "b70fc11c3d206776a9d8beba5bc0e95b9b191f32d57d94965d7b471172c6f20f",
-    "success_semantics_hash": "ef7e4511fe861b7e784c5b6eee33227f26ad17ef10eabf727179caab2e3e4a6b"
+    "success_semantics_hash": "a0ee4cc28b587a3c360191c5faee4ba4a4ba6f87259ce2fdf04751ea1e5ccb34"
   },
   "tasks": [
     "PutRubbishInBin"

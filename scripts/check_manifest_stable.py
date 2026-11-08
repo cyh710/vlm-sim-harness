@@ -36,11 +36,18 @@ def _planner_prompt_hash() -> str:
 
 
 def _semantics_hash() -> str:
-    """判据标定表的指纹 — 判据是判定的唯一来源, 改了它结果就不可比。"""
+    """判据标定表的指纹 — 判据是判定的唯一来源, 改了它结果就不可比。
+
+    按**规范化后的文本**算, 不按原始字节: 换行符 (CRLF/LF) 不改变判据
+    的语义, 不该让指纹漂移。按字节算的话, 同一份文件在不同平台的
+    checkout 下会得到不同的哈希, 门禁就会在别人的机器上无故变红。
+    """
     p = REPO / "results" / "success_semantics.csv"
     if not p.exists():
         return ""
-    return hashlib.sha256(p.read_bytes()).hexdigest()
+    text = p.read_text(encoding="utf-8", newline="")
+    normalized = text.replace("\r\n", "\n").replace("\r", "\n")
+    return hashlib.sha256(normalized.encode("utf-8")).hexdigest()
 
 
 def main() -> int:

@@ -1,0 +1,4 @@
+{
+  "_comment": "技能表的可配置前置阈值。数值来源: calibration/success_semantics.csv (判据唯一来源) + mock 后端标定。grasp_visible_ratio_min: grasp 前置的可见率下限 — 低于此值说明目标基本看不见, S3 拒绝执行 (不盲抓)。物理后端可显式放宽 (纸团被夹爪自身遮挡时可见率天然偏低), 但覆盖必须在调用处写出来, 不能从代码里删掉门槛 — 否则'这个后端为什么不看可见率'在代码里不可见。",
+  "grasp_visible_ratio_min": 0.2
+}

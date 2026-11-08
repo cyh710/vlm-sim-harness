@@ -1,0 +1,71 @@
+{
+  "_comment": "任务闭集资产描述 (VLM 识别候选)。自然语言描述与场景内实际外观一致; 由任务定义提供, 非 GT 泄漏 (颜色/形状是任务先验)。",
+  "PutRubbishInBin": {
+    "candidates": [
+      {
+        "id": "rubbish",
+        "desc": "一团揉皱的白色废纸团, 不规则形状"
+      },
+      {
+        "id": "bin",
+        "desc": "蓝色网状垃圾桶/收纳篮, 网格纹理, 场景中最大的容器"
+      },
+      {
+        "id": "tomato",
+        "desc": "红色圆形番茄 (干扰物, 不是任务目标)"
+      }
+    ]
+  },
+  "PickUpCup": {
+    "candidates": [
+      {
+        "id": "cup1",
+        "desc": "一个杯子/茶杯"
+      },
+      {
+        "id": "cup2",
+        "desc": "另一个杯子"
+      }
+    ]
+  },
+  "RLBench_assets": {
+    "candidates": [
+      {
+        "id": "banana",
+        "desc": "黄色弯曲的香蕉"
+      },
+      {
+        "id": "carrot",
+        "desc": "橙色细长胡萝卜"
+      },
+      {
+        "id": "plate",
+        "desc": "白色扁平圆盘餐盘"
+      },
+      {
+        "id": "small_container",
+        "desc": "小型方形/圆柱收纳盒"
+      },
+      {
+        "id": "frying_pan",
+        "desc": "黑色圆形煎锅带手柄"
+      },
+      {
+        "id": "knife_block",
+        "desc": "插着刀具的刀架木块"
+      },
+      {
+        "id": "chopping_board",
+        "desc": "棕色扁平切菜板"
+      },
+      {
+        "id": "dish_rack",
+        "desc": "金属镂空碗碟沥水架"
+      },
+      {
+        "id": "large_container",
+        "desc": "大型方形收纳容器"
+      }
+    ]
+  }
+}

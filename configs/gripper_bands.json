@@ -1,0 +1,10 @@
+{
+  "_comment": "夹爪开度分带 — 判定 'holding' 的本体信号。来源: calibration/success_semantics.csv (PutRubbishInBin@sim410 行) + 实测标定 (sim410 真实物理闭合: 夹住 0.25~0.95 / 空爪 ~1.0 / 闭合到底 ~0.0)。必须由 verifier (harness/spec/dsl.py) 与 VLM prompt (harness/planning/vlm_planner.py) 共用同一份数值 — 两者不一致时 VLM 被告知的判据不是它被判定用的判据。",
+  "hold_min": 0.25,
+  "hold_max": 0.95,
+  "empty_high": 0.95,
+  "empty_low": 0.05,
+  "z_offset_mm_default": 0,
+  "z_offset_mm_retry": [-25, -10],
+  "z_offset_mm_clamp": 50
+}

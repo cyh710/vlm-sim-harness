@@ -1,0 +1,13 @@
+{
+  "_comment": "文本 LLM 规划器的运行参数 (backend: openai_compat)。模型 ID / 端点 / 密钥全部经环境变量注入: 密钥不入库。冻结项 (model_id / temperature / max_tokens) 记在 configs/preregistration.json 的 frozen_artifacts, 改动必须重新冻结, 否则结果不可比。max_tokens=32768 的原因: 推理模型的思考 token 计入输出预算, 4096 会触发 finish=length 且 content 为空 — 这是本项目最早一次实验事故的根因, 教训保留在这里。",
+  "backend": "openai_compat",
+  "base_url_env": "OPENAI_BASE_URL",
+  "api_key_env": "OPENAI_API_KEY",
+  "model_id_env": "OPENAI_MODEL",
+  "model_id_fallback": "deepseek-flash",
+  "temperature": 0,
+  "max_tokens": 32768,
+  "request_timeout_s": 180,
+  "transport_retries": 2,
+  "transport_retry_backoff_s": 3
+}

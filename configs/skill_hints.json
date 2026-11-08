@@ -1,0 +1,12 @@
+{
+  "_comment": "受信技能用法提示, 按 task 注入 LLMPlanner payload 的 task.usage_hints。数值唯一来源是 calibration/success_semantics.csv 的 M2 标定行 (AGENTS rule 2: 阈值不得写死在代码里)。这些是'怎么用技能'的标定约定, 不是成功判定信息 — 判定仍由 S5 独立验证。M4 发现: 剧本 planner 把 place 释放高度 (bin z +0.12m) 写在步骤里, LLM 看不到该约定导致投放点错误 → place 超时 (seeds 1001/1002 复现)。",
+
+  "PutRubbishInBin": {
+    "place": "release target: XY = container base frame XY, Z = container base Z + 0.12 m (M2 calibrated drop height, calibration/success_semantics.csv:PutRubbishInBin). Releasing lower hits the rim or bounces out.",
+    "grasp": "target_xyz: use the object's current WORLD pose_xyz (re-read after any world change)."
+  },
+  "PickUpCup": {
+    "grasp": "target_xyz: use the cup's current WORLD pose_xyz; the skill lifts it 0.30 m clear (LIFT skill constant, success_semantics.csv:PickUpCup).",
+    "done": "call control:done only after verified progress shows holding + displacement."
+  }
+}

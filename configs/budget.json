@@ -1,0 +1,9 @@
+{
+  "_comment": "Mock(M1) 阶段预算。正式实验预算以 configs/preregistration.json 的 budget_caps 为准（四组一致）。L4 重标 (2026-11-03, 50 集 sim410 冒烟实测): episode wall median 42s / p90 47s / max 52s (主机高负载时仿真 ~45Hz), 预算按 max×3.5=180s 标定; 其余项不变。",
+  "max_physical_actions": 20,
+  "max_queries": 40,
+  "max_llm_calls": 60,
+  "max_replans": 5,
+  "max_recoveries": 8,
+  "max_wall_time_s": 180.0
+}

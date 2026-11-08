@@ -1,0 +1,104 @@
+{
+  "_comment": "预注册 — 正式 run 前的冻结快照。任何改动 (技能表/能力卡/效果模板/提示词/DSL 词表/判据) 都必须重新冻结, 否则结果不可比。frozen_artifacts 里的哈希由 scripts/check_manifest_stable.py --freeze 写入; 漂移会被 CI 检出。",
+  "version": "1.0",
+  "frozen_at": "2026-11-09T00:00:00",
+  "frozen_by": "vlm-agent-harness",
+  "stage": "framework-freeze",
+  "note": "本快照冻结的是框架层的受信契约: 技能表、效果模板、DSL 词表、提示词指纹、判据标定。实验臂设计 (A/B/C1/C 的开关差异)、seed 纪律、统计口径在此之外单独记录。",
+  "primary_endpoint": {
+    "name": "task_success_C_vs_A",
+    "task": "PutRubbishInBin",
+    "fault": "F2",
+    "comparison": [
+      "C",
+      "A"
+    ],
+    "seeds": {
+      "start": 3001,
+      "end": 3100,
+      "count": 100
+    },
+    "statistic": "paired_bootstrap_diff",
+    "ci": "95%",
+    "resamples": 10000,
+    "note": "唯一主端点。配对设计: 同 seed 跨臂共享。其余结果为次要或探索性。"
+  },
+  "arms": {
+    "A": {
+      "s5_verifier": false,
+      "recovery": false,
+      "replan_enabled": false,
+      "progress_ledger": false
+    },
+    "B": {
+      "s5_verifier": true,
+      "recovery": false,
+      "replan_enabled": false,
+      "progress_ledger": false
+    },
+    "C1": {
+      "s5_verifier": true,
+      "recovery": true,
+      "replan_enabled": false,
+      "progress_ledger": true
+    },
+    "C": {
+      "s5_verifier": true,
+      "recovery": true,
+      "replan_enabled": true,
+      "progress_ledger": true
+    }
+  },
+  "budget_caps": {
+    "max_physical_actions": 12,
+    "max_queries": 8,
+    "max_replans": 3,
+    "max_wall_time_s": 180,
+    "max_llm_calls": 12,
+    "max_no_progress_cycles": 4
+  },
+  "frozen_artifacts": {
+    "planner_prompt_version": "m4-2",
+    "planner_prompt_hash": "08356e6352a06da5278cf1e59c644e281348f3f9884dfc72ce4c0218cece4562",
+    "vlm_prompt_version": "vlm-1",
+    "vlm_prompt_hash": "5e70589fc9fc14de803f158ad1b8015ca00ee701c1b61d5b0265e8692371542f",
+    "skill_manifest_hash": "2ace69f1a659106abf62416484c6a25413defe2b7191f9d70f0380fce32a4df3",
+    "dsl_whitelist_hash": "b70fc11c3d206776a9d8beba5bc0e95b9b191f32d57d94965d7b471172c6f20f",
+    "success_semantics_hash": "ef7e4511fe861b7e784c5b6eee33227f26ad17ef10eabf727179caab2e3e4a6b"
+  },
+  "tasks": [
+    "PutRubbishInBin"
+  ],
+  "perception_mode": "sensor_eval",
+  "secondary_endpoints": [
+    "false_completion_rate (agent 声称完成但 judge 不认)",
+    "repeated_physical_action_rate (未决动作被重发的比例)",
+    "cost_per_success (physical_actions + llm_calls)"
+  ],
+  "exploratory": [
+    "其余臂对",
+    "PickUpCup",
+    "其余故障"
+  ],
+  "seeds": {
+    "dev": [
+      1001,
+      1020
+    ],
+    "confirm": [
+      3001,
+      3100
+    ]
+  },
+  "faults": {
+    "N0": "无注入故障",
+    "F1": "首次抓取为空夹 (物理事实)",
+    "F2": "回执丢失: 动作已生效但返回超时",
+    "F3": "过期观测"
+  },
+  "analysis": {
+    "method": "配对 bootstrap, 百分位法, 10000 次重采样, 固定 RNG 种子",
+    "alpha": 0.05,
+    "multiple_comparison": "主端点唯一; 其余为次要/探索性, 不校正"
+  }
+}

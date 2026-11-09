@@ -1,13 +1,13 @@
 <div align="center">
 
-# vlm-agent-harness
+# vlm-sim-harness
 
-**给 VLM 与物理机器人之间加一道信任边界。**
+**给 VLM 与仿真机器人之间加一道信任边界。**
 
-[![CI](https://github.com/cyh710/vlm-agent-harness/actions/workflows/ci.yml/badge.svg)](https://github.com/cyh710/vlm-agent-harness/actions/workflows/ci.yml)
+[![CI](https://github.com/cyh710/vlm-sim-harness/actions/workflows/ci.yml/badge.svg)](https://github.com/cyh710/vlm-sim-harness/actions/workflows/ci.yml)
 [![Python](https://img.shields.io/badge/python-3.9%20%7C%203.11%20%7C%203.12-blue)](https://www.python.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-[![Tests](https://img.shields.io/badge/tests-102%20passed-brightgreen)](tests/)
+[![Tests](https://img.shields.io/badge/tests-108%20passed-brightgreen)](tests/)
 [![Deps](https://img.shields.io/badge/dependencies-none%20(framework)-blue)](requirements.txt)
 
 [概览](#概览) · [方法](#方法) · [结果](#结果) · [快速开始](#快速开始) ·
@@ -26,7 +26,8 @@
 底下某一层，agent 声称抓住了一个它根本没抓住的东西，把物体释放到了空气里，
 然后整集以绿色结束。
 
-这个项目做的，就是让那份「相信」变得**可被检验**。
+这个项目做的，就是让那份「相信」变得**可被检验** —— 并且用一次预注册的实验
+去测量这层边界到底有没有用。
 
 ```
    VLM 提议  ──▶  校验器放行  ──▶  执行器动作  ──▶  核验器判定  ──▶  账本记录
@@ -48,6 +49,10 @@
 **超时不是失败**：机器人可能已经把物体移动了。对结果未知的物理动作禁止
 重发 —— 物理动作不是幂等的。
 
+**仿真不是妥协，是这个问题的前提。** 正因为有仿真器，才能在已知的时刻注入
+故障、跨臂重放同一个 seed、读到 agent 从没见过的真值 —— 下面的结果就是这么
+来的：RLBench 上 431 集，按 seed 配对，主端点在跑之前就冻结了。
+
 ### 适合谁 / 不适合谁
 
 | | |
@@ -56,7 +61,7 @@
 | ✅ **适合** | 你在做 agent 评测，需要一个「证据驱动核验 + 预注册 + 配对统计」的参考实现。 |
 | ✅ **适合** | 你在设计模型与任何**不可逆后果**之间的安全边界。这套信任边界模式可以直接迁移。 |
 | ❌ **不适合** | 你想要预训练策略或 VLA checkpoint。本仓库**不含模型权重** —— 它是包在模型外面的执行与评测层。 |
-| ❌ **不适合** | 你想要开箱即用的机器人 SDK。硬件后端被有意排除在外（见[现状与范围](#现状与范围)）。 |
+| ❌ **不适合** | 你想在真机上跑。发布的后端是仿真器；硬件后端被有意排除在外（见[现状与范围](#现状与范围)）。 |
 | ❌ **不适合** | 你要训练策略。这里没有任何梯度更新相关的东西。 |
 
 ---
@@ -166,7 +171,7 @@ flowchart LR
 
 ## 结果
 
-431 集，配对种子，配对 bootstrap（10000 次重采样，固定 RNG）。
+RLBench 仿真器上 431 集，配对种子，配对 bootstrap（10000 次重采样，固定 RNG）。
 
 **主端点 —— 回执丢失（F2）下 C vs A：`+0.881`，95% CI `[0.786, 0.976]`**
 （42 个配对 seed，37 对不一致）。
@@ -204,21 +209,21 @@ python scripts/analyze_m5.py results/m5/m5_confirm_merged_rows.json
 ## 快速开始
 
 框架层**零第三方依赖** —— `numpy` 和 `pillow` 是惰性导入，只有真的要编码
-图像发给模型时才需要。屏蔽这两个包后 102 个测试仍全部通过。不需要 API key、
+图像发给模型时才需要。屏蔽这两个包后 108 个测试仍全部通过。不需要 API key、
 不需要仿真器、不需要机器人。
 
 ```bash
-git clone https://github.com/cyh710/vlm-agent-harness.git
-cd vlm-agent-harness
+git clone https://github.com/cyh710/vlm-sim-harness.git
+cd vlm-sim-harness
 
-python -m pytest tests/ -q          # 102 个测试
+python -m pytest tests/ -q          # 108 个测试
 python scripts/run_mock.py           # 10 场景 mock 矩阵
 ```
 
 预期输出：
 
 ```
-102 passed in 0.44s
+108 passed in 0.44s
 ...
 ALL GREEN
 ```
@@ -243,6 +248,23 @@ export VLM_MODEL="claude-sonnet-5"
 `harness/planning/vlm_planner.py` 走 Anthropic Messages 协议（多模态 content
 块）。也接受 `ANTHROPIC_*` / `DEEPSEEK_*` 作为别名；端点在构造时注入，
 所以任何接受 `/v1/messages` 形状的网关都能用。
+
+### 对接仿真器
+
+实验后端是 [RLBench](https://github.com/stepjam/RLBench)（Imperial College
+London），通过 `harness/adapters/rlbench_adapter.py` 接入。RLBench 自带非商业
+研究许可，**不在本仓再分发** —— 请按它自己的说明安装（需要 CoppeliaSim 和
+PyRep）。
+
+```bash
+pip install -r requirements-sim.txt
+pip install rlbench pyrep             # 按 RLBench 自己的说明
+```
+
+适配器对 `rlbench`/`pyrep` 是惰性导入的，所以框架在没有它们的机器上依然能
+import —— `import harness.adapters.rlbench_adapter` 在从没见过仿真器的机器上
+也能跑通，契约测试（`tests/test_rlbench_adapter.py`）不启动仿真器就能检查
+接线是否正确。
 
 ### 接入你自己的后端
 
@@ -282,12 +304,12 @@ harness/
   spec/        运行时 FSM · DSL 核验器 · 校验器 · 双账本 · 预算 · 安全
   planning/    VLM 规划器（识别+决策）· LLM 规划器 · SoM 识别器
   skills/      grasp / place / motion —— 只产生运动，不产生判决
-  adapters/    判卷桥（oracle 边界）· mock 后端（框架自检）
+  adapters/    判卷桥（oracle 边界）· RLBench 仿真后端 · mock 后端（框架自检）
 configs/       冻结阈值 · 任务资产描述 · 预注册
 results/       标定表（判决的唯一真源）
                m5/ —— 431 集逐集数据 + 由它算出的分析
 scripts/       mock 矩阵 · oracle 隔离检查 · 清单漂移检查 · 分析
-tests/         102 个测试，离线，不需要 API key
+tests/         108 个测试，离线，不需要 API key 也不需要仿真器
 docs/DESIGN.md 决策记录，以及那些被证明是错的决策
 ```
 
@@ -295,19 +317,25 @@ docs/DESIGN.md 决策记录，以及那些被证明是错的决策
 
 ## 现状与范围
 
-**这里发布的是**：框架层 + VLM 应用层。框架与平台无关 —— 后端通过 `Adapter`
-接口接入，`harness/` 下没有任何模块 import 仿真器。
+**这里发布的是**：框架层 + VLM 应用层 + 431 集实验所跑的 RLBench 仿真后端。
+框架与平台无关 —— 后端通过 `Adapter` 接口接入。
 
 | | 状态 |
 |---|---|
 | 九状态循环、信任边界、账本语义、预算记账、预注册守卫 | ✅ 有测试 |
 | VLM 协议 —— 双图 SoM、识别映射唯一性、id 翻译、place 规范化、提示词冻结、传输重试、协议错误处理 | ✅ 有测试 |
+| RLBench 后端 —— 适配器契约、故障注入开关、判卷桥 | ✅ 有契约测试（真跑需要装 RLBench） |
 | 四臂实验 —— 431 集，主端点带 95% CI | ✅ 可从随仓数据复现 |
-| VLM 在环的物理硬件任务成功率 | ⚠️ **尚未测量** —— 见下 |
+| VLM 在环的真实感知任务成功率 | ⚠️ **尚未测量** —— 见下 |
 
 **有意不包含的东西**，以及原因：
 
-- **物理后端**（CoppeliaSim / UR5 / ROS 2）—— 它们需要授权的仿真器资产和一台
+- **真实感知后端。** 发布的适配器跑的是 `gt_debug` 模式：物体位姿直接来自
+  仿真场景 —— 实验就是这么跑的。`sensor_eval` 模式（物体只来自视觉链路）
+  需要一套感知栈（分割 + 实例注册），不在本仓内。适配器对该模式**直接报错**
+  而不是悄悄退回真值 —— 悄悄退回会把「关于真实感知的结论」变成「关于真值的
+  结论」，而日志看起来完全正常。
+- **其他物理后端**（CoppeliaSim / UR5 / ROS 2）—— 它们需要授权的仿真器资产和一台
   机器人。它们通过 `Adapter` 接入。
 - **模型权重** —— 这是包在模型外面的执行与评测层，不是模型。
 - **「直接 VLM 控制」对照臂** —— 最自然的对照（同一模型、直接输出工具调用、
@@ -317,8 +345,8 @@ docs/DESIGN.md 决策记录，以及那些被证明是错的决策
 **诚实的缺口。** 早先一版 VLM 在环的配置跑出零成功。根因是 VLM 规划器
 `place` 分支里的一个缺陷：容器位姿被手中物的位姿覆盖，导致投放点落在物体
 自己的位置上。这个缺陷已修，并由 `tests/test_vlm_planner.py` 覆盖；离线的
-端到端整集现在能跑完。**在硬件上重测成功率是下一步，而本仓库不发布未经
-测量的数字。**
+端到端整集现在能跑完。**接上感知链后重测成功率是下一步，而本仓库不发布
+未经测量的数字。**
 
 完整的未解决问题清单 —— 包括 n = 8 的识别消融、未发布的成本/延迟曲线、
 缺失的对照臂 —— 见 [docs/DESIGN.md § 9](docs/DESIGN.md)。
@@ -345,11 +373,11 @@ docs/DESIGN.md 决策记录，以及那些被证明是错的决策
 
 ```bibtex
 @misc{vlm_agent_harness_2026,
-  title       = {vlm-agent-harness: a trust-boundary execution and
+  title       = {vlm-sim-harness: a trust-boundary execution and
                  evaluation harness for VLM-driven embodied agents},
   author      = {cyh710},
   year        = {2026},
-  howpublished = {\url{https://github.com/cyh710/vlm-agent-harness}},
+  howpublished = {\url{https://github.com/cyh710/vlm-sim-harness}},
   license     = {MIT}
 }
 ```

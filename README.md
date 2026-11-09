@@ -1,13 +1,13 @@
 <div align="center">
 
-# vlm-agent-harness
+# vlm-sim-harness
 
-**A trust boundary between a vision-language model and a physical robot.**
+**A trust boundary between a vision-language model and a simulated robot.**
 
-[![CI](https://github.com/cyh710/vlm-agent-harness/actions/workflows/ci.yml/badge.svg)](https://github.com/cyh710/vlm-agent-harness/actions/workflows/ci.yml)
+[![CI](https://github.com/cyh710/vlm-sim-harness/actions/workflows/ci.yml/badge.svg)](https://github.com/cyh710/vlm-sim-harness/actions/workflows/ci.yml)
 [![Python](https://img.shields.io/badge/python-3.9%20%7C%203.11%20%7C%203.12-blue)](https://www.python.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-[![Tests](https://img.shields.io/badge/tests-102%20passed-brightgreen)](tests/)
+[![Tests](https://img.shields.io/badge/tests-108%20passed-brightgreen)](tests/)
 [![Deps](https://img.shields.io/badge/dependencies-none%20(framework)-blue)](requirements.txt)
 
 [Overview](#overview) · [Method](#method) · [Results](#results) · [Quickstart](#quickstart) ·
@@ -27,7 +27,9 @@ rate in the paper is right. And somewhere underneath, the agent claimed a
 grasp it never got, released an object into thin air, and ended the episode
 green.
 
-This project is the layer that makes that belief checkable.
+This project is the layer that makes that belief checkable — and it measures
+whether the layer actually helps, in simulation, with a pre-registered
+experiment.
 
 ```
    VLM proposes  ──▶  Validator gates  ──▶  Executor acts  ──▶  Verifier judges  ──▶  Ledger records
@@ -51,6 +53,13 @@ UNSAFE`. `INCONCLUSIVE` means *evidence insufficient*, and it is distinct from
 moved the object. Re-sending an unknown-outcome physical action is forbidden,
 since physical actions are not idempotent.
 
+**Simulation is the point, not a limitation.** A simulator is what makes the
+question answerable: you can inject a fault at a known instant, replay the
+same seed across arms, and read ground truth the agent never saw. That is how
+the result below was obtained — 431 episodes on
+[RLBench](https://github.com/stepjam/RLBench), paired by seed, with the
+primary endpoint frozen in advance.
+
 ### Who this is for
 
 | | |
@@ -59,7 +68,7 @@ since physical actions are not idempotent.
 | ✅ **Good fit** | You're doing agent evaluation and need a reference implementation of evidence-driven verification, pre-registration, and paired statistics. |
 | ✅ **Good fit** | You're designing the safety boundary between a model and anything with irreversible consequences. The trust-boundary pattern transfers directly. |
 | ❌ **Not a fit** | You want a pretrained policy or a VLA checkpoint. This repo ships **no model weights** — it is the execution and evaluation layer *around* a model. |
-| ❌ **Not a fit** | You want a plug-and-play robot SDK. The hardware backends are deliberately not included (see [Status](#status--scope)). |
+| ❌ **Not a fit** | You want to run on a real robot. The published backend is a simulator; the hardware backends are not included (see [Status](#status--scope)). |
 | ❌ **Not a fit** | You're training a policy. Nothing here is about gradient updates. |
 
 ---
@@ -176,7 +185,8 @@ ids.
 
 ## Results
 
-431 episodes, paired seeds, paired bootstrap (10 000 resamples, fixed RNG).
+431 episodes on the RLBench simulator, paired seeds, paired bootstrap
+(10 000 resamples, fixed RNG).
 
 **Primary endpoint — C vs A under receipt loss (F2): `+0.881`, 95% CI
 `[0.786, 0.976]`** (42 paired seeds, 37 discordant).
@@ -220,21 +230,21 @@ python scripts/analyze_m5.py results/m5/m5_confirm_merged_rows.json
 
 The framework layer has **zero third-party dependencies** — `numpy` and
 `pillow` are imported lazily, only when an image is actually encoded for the
-model. All 102 tests pass with both blocked. No API key, no simulator, no
+model. All 108 tests pass with both blocked. No API key, no simulator, no
 robot.
 
 ```bash
-git clone https://github.com/cyh710/vlm-agent-harness.git
-cd vlm-agent-harness
+git clone https://github.com/cyh710/vlm-sim-harness.git
+cd vlm-sim-harness
 
-python -m pytest tests/ -q          # 102 tests
+python -m pytest tests/ -q          # 108 tests
 python scripts/run_mock.py           # 10-scenario mock matrix
 ```
 
 Expected output:
 
 ```
-102 passed in 0.44s
+108 passed in 0.44s
 ...
 ALL GREEN
 ```
@@ -262,6 +272,23 @@ export VLM_MODEL="claude-sonnet-5"
 (multimodal content blocks). `ANTHROPIC_*` and `DEEPSEEK_*` are accepted as
 aliases, and the endpoint is injected at construction time, so any gateway that
 accepts the `/v1/messages` shape works.
+
+### Running against the simulator
+
+The experiment backend is [RLBench](https://github.com/stepjam/RLBench) (Imperial
+College London), reached through `harness/adapters/rlbench_adapter.py`. RLBench
+carries its own non-commercial research licence and is **not** redistributed
+here — install it per its own instructions (it needs CoppeliaSim and PyRep).
+
+```bash
+pip install -r requirements-sim.txt
+pip install rlbench pyrep             # per RLBench's own instructions
+```
+
+The adapter imports `rlbench`/`pyrep` lazily, so the framework stays importable
+without them — `import harness.adapters.rlbench_adapter` works on a machine
+that has never seen a simulator, and the contract tests
+(`tests/test_rlbench_adapter.py`) check the wiring without starting one.
 
 ### Bringing your own backend
 
@@ -307,12 +334,12 @@ harness/
   spec/        runtime FSM · DSL verifier · validator · ledgers · budget · safety
   planning/    VLM planner (recognition + decision) · LLM planner · SoM recognizer
   skills/      grasp / place / motion — motion only, never verdicts
-  adapters/    judge bridge (oracle boundary) · mock backend (self-test)
+  adapters/    judge bridge (oracle boundary) · RLBench backend · mock backend
 configs/       frozen thresholds · task asset descriptions · preregistration
 results/       calibration tables (the single source of truth for verdicts)
                m5/ — 431 episode rows + the analysis derived from them
 scripts/       mock matrix · oracle isolation check · manifest drift check · analysis
-tests/         102 tests, offline, no API key required
+tests/         108 tests, offline, no API key and no simulator required
 docs/DESIGN.md decisions, and the ones that turned out to be wrong
 ```
 
@@ -320,20 +347,29 @@ docs/DESIGN.md decisions, and the ones that turned out to be wrong
 
 ## Status & Scope
 
-**What ships here.** The framework layer and the VLM application layer. The
-framework is platform-independent — a backend arrives through the `Adapter`
-interface and nothing under `harness/` imports a simulator.
+**What ships here.** The framework layer, the VLM application layer, and the
+RLBench simulator backend that the 431-episode experiment ran on. The framework
+is platform-independent — a backend arrives through the `Adapter` interface.
 
 | | Status |
 |---|---|
 | Nine-state loop, trust boundary, ledger semantics, budget accounting, pre-registration guard | ✅ tested |
 | VLM protocol — dual-image SoM, recognition-map uniqueness, id translation, place normalization, prompt freezing, transport retry, protocol-error handling | ✅ tested |
+| RLBench backend — adapter contract, fault-injection switches, judge bridge | ✅ contract-tested (needs RLBench installed to actually run) |
 | Four-arm experiment — 431 episodes, primary endpoint with 95% CI | ✅ reproducible from shipped rows |
-| VLM-in-the-loop task success on physical hardware | ⚠️ **not yet measured** — see below |
+| VLM-in-the-loop task success under real perception | ⚠️ **not yet measured** — see below |
 
 **What is deliberately absent**, and why:
 
-- **Physical backends** (CoppeliaSim / UR5 / ROS 2) — they need licensed
+- **A real-perception backend.** The published adapter runs in `gt_debug`
+  mode: object poses come from the simulator scene. That is what the
+  experiment used. A `sensor_eval` mode — objects sourced only from the vision
+  chain — needs a perception stack (segmentation + instance registration) that
+  is not part of this repository. The adapter **raises** for that mode rather
+  than silently falling back to ground truth, because a silent fallback would
+  turn "a conclusion about real perception" into "a conclusion about ground
+  truth" while the logs looked normal.
+- **Other physical backends** (CoppeliaSim / UR5 / ROS 2) — they need licensed
   simulator assets and a robot. They plug in through `Adapter`.
 - **Model weights** — this is the execution and evaluation layer *around* a
   model, not a model.
@@ -347,8 +383,8 @@ zero successes. The cause was a defect in the `place` branch of the VLM planner:
 the container pose was being overwritten by the held object's pose, so the drop
 target was the object's own location. That defect is fixed and covered by
 `tests/test_vlm_planner.py`; the end-to-end offline episode now completes.
-**Re-measuring the success rate on hardware is the next step, and this
-repository does not publish a number it has not measured.**
+**Re-measuring the success rate with the perception chain is the next step, and
+this repository does not publish a number it has not measured.**
 
 Full list of open problems — including the recognition ablation at n = 8, the
 unpublished cost/latency curve, and the missing baseline arm — is in
@@ -379,11 +415,11 @@ underlying benchmarks and prior art properly:
 
 ```bibtex
 @misc{vlm_agent_harness_2026,
-  title       = {vlm-agent-harness: a trust-boundary execution and
+  title       = {vlm-sim-harness: a trust-boundary execution and
                  evaluation harness for VLM-driven embodied agents},
   author      = {cyh710},
   year        = {2026},
-  howpublished = {\url{https://github.com/cyh710/vlm-agent-harness}},
+  howpublished = {\url{https://github.com/cyh710/vlm-sim-harness}},
   license     = {MIT}
 }
 ```

@@ -1,0 +1,16 @@
+# 仿真后端依赖 — 仅在你要真正跑 RLBench 仿真时需要
+#
+#   pip install -r requirements-sim.txt
+#
+# 框架层本身零依赖 (见 requirements.txt), 上面 102 个测试不需要装任何东西。
+#
+# RLBench (Imperial College London) 自带非商业学术研究许可, 不能随本仓再分发;
+# 请按其官方说明自行获取并安装 (它需要 CoppeliaSim 与 PyRep)。
+#
+#   pip install rlbench            # 或按 RLBench 仓库的说明安装
+#   pip install pyrep              # PyRep 提供 CoppeliaSim 的 Python 绑定
+#
+# numpy / scipy 只被适配器的仿真路径使用; 框架层不 import 它们。
+
+numpy>=1.24
+scipy>=1.10

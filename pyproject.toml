@@ -3,14 +3,14 @@ requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "vlm-agent-harness"
+name = "vlm-sim-harness"
 version = "1.0.0"
-description = "A trust-boundary execution harness for VLM-driven embodied agents: nine-state FSM, independent verification, dual ledgers, pre-registered evaluation."
+description = "A trust-boundary execution harness for VLM-driven embodied agents in simulation: nine-state FSM, independent verification, dual ledgers, pre-registered evaluation."
 readme = "README.md"
 requires-python = ">=3.9"
 license = { text = "MIT" }
 authors = [{ name = "cyh710" }]
-keywords = ["vlm", "agent", "embodied-ai", "robotics", "evaluation", "llm"]
+keywords = ["vlm", "agent", "embodied-ai", "robotics", "simulation", "evaluation", "llm", "harness"]
 classifiers = [
     "Programming Language :: Python :: 3",
     "License :: OSI Approved :: MIT License",
@@ -26,7 +26,7 @@ vlm = ["pillow>=10.0", "numpy>=1.24"]
 dev = ["pytest>=7.0"]
 
 [project.urls]
-Homepage = "https://github.com/cyh710/vlm-agent-harness"
+Homepage = "https://github.com/cyh710/vlm-sim-harness"
 
 [tool.setuptools.packages.find]
 include = ["harness*"]

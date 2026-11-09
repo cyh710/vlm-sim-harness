@@ -20,8 +20,8 @@ import urllib.request
 from pathlib import Path
 from typing import Optional
 
-import numpy as np
-from PIL import Image
+# numpy / PIL 只在真正编码图像时才需要, 所以惰性导入 — 框架层保持零第三方
+# 依赖, clone 下来就能跑全部单测 (包括 VLM 层的), 不需要先装 pillow/numpy。
 
 
 def load_task_assets(task: str, path: str | None = None) -> list[dict]:
@@ -113,7 +113,13 @@ def recognize_marked(endpoint: dict, annotated_rgb: "np.ndarray",
     return out
 
 
-def _b64_png(rgb: "np.ndarray") -> str:
+def _b64_png(rgb) -> str:
+    """把 RGB 数组编码成 base64 PNG。
+
+    numpy / PIL 在这里惰性导入: 只有真的要向模型发图时才需要它们,
+    框架层的其余部分保持零第三方依赖。
+    """
+    from PIL import Image
     buf = io.BytesIO()
     Image.fromarray(rgb).save(buf, format="PNG")
     return base64.b64encode(buf.getvalue()).decode()
